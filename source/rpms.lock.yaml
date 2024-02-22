@@ -1,0 +1,33 @@
+lockfileVersion: 1
+lockfileVendor: abcde
+lockfileType: lock
+arches:
+  - arch: x86_64
+    packages:
+      - url: https://mirrors.nic.cz/pub/fedora/linux/updates/38/Everything/x86_64/Packages/v/vim-enhanced-9.1.113-1.fc38.x86_64.rpm
+        checksum: sha256:545d77bb579a8fb3e87ecd1d5acf616b4b837612f189206171edad73fd4864ab
+        size: 1975462
+        repoid: updates
+      - url: https://mirrors.nic.cz/pub/fedora/linux/updates/38/Everything/x86_64/Packages/v/vim-common-9.1.113-1.fc38.x86_64.rpm
+        checksum: sha256:cce5fcc8b6b0312caeca04a19494358888b00c125747f5c2d2bd8f006665c730
+        size: 8207912
+        repoid: updates
+      - url: https://mirrors.nic.cz/pub/fedora/linux/updates/38/Everything/x86_64/Packages/v/vim-filesystem-9.1.113-1.fc38.noarch.rpm
+        checksum: sha256:8743bcb074aed6aa20914b7d0258cd6938e3642fe3550279bb1c66c6300d936a
+        size: 18006
+        repoid: updates
+      - url: https://mirrors.nic.cz/pub/fedora/linux/releases/38/Everything/x86_64/os/Packages/g/gpm-libs-1.20.7-42.fc38.x86_64.rpm
+        checksum: sha256:ad16ec814c4423d007d218a3f45d2e39d3dab00fc8c0d75eef176041594e3970
+        size: 20875
+        repoid: fedora
+    sources:
+      - url: https://mirrors.nic.cz/pub/fedora/linux/updates/38/Everything/source/tree/Packages/v/vim-9.1.113-1.fc38.src.rpm
+        checksum: sha256:feeff63354d1d23f6636a575ae0351a71174c60f7c5c01da295c756baa4a6352
+        size: 14671827
+        repoid: updates-source
+      - url: https://mirrors.nic.cz/pub/fedora/linux/releases/38/Everything/source/tree/Packages/g/gpm-1.20.7-42.fc38.src.rpm
+        checksum: sha256:ad004fdcb4a95a848fd00d57765476d8d576bf6824fd073f56290b6c52d7e5b2
+        size: 250906
+        repoid: fedora-source
+#  - arch: aarch64
+#    packages:

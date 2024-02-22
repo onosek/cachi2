@@ -1,0 +1,59 @@
+lockfileVersion: 1
+lockfileVendor: abcde
+lockfileType: lock
+arches:
+  - arch: x86_64
+    packages:
+      - repoid: fedora
+        url: https://kojipkgs.fedoraproject.org/compose/rawhide/latest-Fedora-Rawhide/compose/Everything/x86_64/os/Packages/l/libsodium-1.0.19-4.fc40.x86_64.rpm
+        checksum: sha256:e8ec4a0e9b5e9246c661d5562fc692c697f6769846de718d3c8e0929dd5ae9de
+        size: 178718
+      - repoid: fedora
+        url: https://kojipkgs.fedoraproject.org/compose/rawhide/latest-Fedora-Rawhide/compose/Everything/x86_64/os/Packages/v/vim-enhanced-9.1.113-1.fc41.x86_64.rpm
+        checksum: sha256:dca5053a4ce789b8f70e063a45e9a7b512d8d8bf5baa8e265a7f5b9ce0c90412
+        size: 1954810
+      - repoid: fedora
+        url: https://kojipkgs.fedoraproject.org/compose/rawhide/latest-Fedora-Rawhide/compose/Everything/x86_64/os/Packages/v/vim-data-9.1.113-1.fc41.noarch.rpm
+        checksum: sha256:4d3169872508b93e8ce4d6d9b7fa5ab4177cd571258248138dc1b3c8477d5c36
+        size: 23475
+      - repoid: fedora
+        url: https://kojipkgs.fedoraproject.org/compose/rawhide/latest-Fedora-Rawhide/compose/Everything/x86_64/os/Packages/x/xxd-9.1.113-1.fc41.x86_64.rpm
+        checksum: sha256:81fa409c8be8c125964787f93f13a4dc9d8f1667d8630cf8ba425ec1a266beca
+        size: 37701
+      - repoid: fedora
+        url: https://kojipkgs.fedoraproject.org/compose/rawhide/latest-Fedora-Rawhide/compose/Everything/x86_64/os/Packages/v/vim-minimal-9.1.113-1.fc41.x86_64.rpm
+        checksum: sha256:b31875f92a00b53432d3e46261d371e421814ff0ba62932e56490771d64787d7
+        size: 823891
+      - repoid: fedora
+        url: https://kojipkgs.fedoraproject.org/compose/rawhide/latest-Fedora-Rawhide/compose/Everything/x86_64/os/Packages/v/vim-filesystem-9.1.113-1.fc41.noarch.rpm
+        checksum: sha256:eaeaf2fefd929916e70e75cd2400a32e175d9f7025bcec208a70ab5055259914
+        size: 18018
+      - repoid: fedora
+        url: https://kojipkgs.fedoraproject.org/compose/rawhide/latest-Fedora-Rawhide/compose/Everything/x86_64/os/Packages/w/which-2.21-41.fc40.x86_64.rpm
+        checksum: sha256:bd005b31a2d65a9f1e7ab9298eecab63a5536d67d714d29faa2a5bcddf44cd27
+        size: 42442
+      - repoid: fedora
+        url: https://kojipkgs.fedoraproject.org/compose/rawhide/latest-Fedora-Rawhide/compose/Everything/x86_64/os/Packages/v/vim-common-9.1.113-1.fc41.x86_64.rpm
+        checksum: sha256:ee5e2da2fb37d9fd10e4b529b8e17ae105ea885d955e227e20b61b8be3f30f82
+        size: 7942116
+      - repoid: fedora
+        url: https://kojipkgs.fedoraproject.org/compose/rawhide/latest-Fedora-Rawhide/compose/Everything/x86_64/os/Packages/g/gpm-libs-1.20.7-46.fc40.x86_64.rpm
+        checksum: sha256:39558e6ac8a5686df32a166428cbd754059a31b3c824c8e34a6a72297075df10
+        size: 20509
+    sources:
+      - repoid: fedora-sources
+        url: https://kojipkgs.fedoraproject.org/compose/rawhide/latest-Fedora-Rawhide/compose/Everything/source/tree/Packages/v/vim-9.1.113-1.fc41.src.rpm
+        checksum: sha256:64938dc971a5aba5e5f94f431b4e17d8f0e10b0fbb19dec1ef7fdcef78dffea2
+        size: 14674115
+      - repoid: fedora-sources
+        url: https://kojipkgs.fedoraproject.org/compose/rawhide/latest-Fedora-Rawhide/compose/Everything/source/tree/Packages/g/gpm-1.20.7-46.fc40.src.rpm
+        checksum: sha256:0261bc3f223efbf6c374f7126161ffe5e6cb653393e72ec84b026c0ca82d046c
+        size: 251673
+      - repoid: fedora-sources
+        url: https://kojipkgs.fedoraproject.org/compose/rawhide/latest-Fedora-Rawhide/compose/Everything/source/tree/Packages/w/which-2.21-41.fc40.src.rpm
+        checksum: sha256:c4b994bfcd17e299dc5e21db8c5d6a1692a96728e745d8fd55d36f2f473c23bf
+        size: 182501
+      - repoid: fedora-sources
+        url: https://kojipkgs.fedoraproject.org/compose/rawhide/latest-Fedora-Rawhide/compose/Everything/source/tree/Packages/l/libsodium-1.0.19-4.fc40.src.rpm
+        checksum: sha256:31bb7b9ea83a26f0ff7333ac1016d73677ca5f93ba44016614dad477443d5985
+        size: 1979932
