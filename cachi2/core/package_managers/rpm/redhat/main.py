@@ -1,4 +1,5 @@
 # import hashlib
+import jsonschema
 import logging
 import os
 import shlex
@@ -15,6 +16,17 @@ from cachi2.core.models.input import Request
 log = logging.getLogger(__name__)
 
 
+# Example JSON Schema
+yaml_schema = {
+    "type": "object",
+    "properties": {
+        "lockfileVersion": {"type": "integer", "minimum": 0},
+        "lockfileVendor": {"type": "string"},
+    },
+    "required": ["lockfileVersion", "lockfileVendor"]
+}
+
+
 def process_redhat_lockfile(request: Request, config: dict) -> None:
     """Process all the yarn source directories in a request."""
 
@@ -23,6 +35,9 @@ def process_redhat_lockfile(request: Request, config: dict) -> None:
     #    for chunk in iter(lambda: f.read(4096), b""):
     #        h.update(chunk)
     # digest = h.hexdigest()
+
+    # Perform validation
+    validate_yaml(config, yaml_schema)
 
     for arch_data in config["arches"]:
         print("=== arch: ", arch_data["arch"])
@@ -53,6 +68,18 @@ def process_redhat_lockfile(request: Request, config: dict) -> None:
 
         for repoid, urls in repoids.items():
             download_packages(session, repo_dir, repoid, urls)
+
+
+def validate_yaml(yaml_data, schema):
+    try:
+        # Validate against JSON Schema
+        jsonschema.validate(instance=yaml_data, schema=schema)
+
+        print("Validation successful!")
+    except jsonschema.ValidationError as e:
+        print(f"Validation error: {e}")
+    except Exception as e:
+        print(f"An error occurred: {e}")
 
 
 def download_file(session, dest_dir, url):
