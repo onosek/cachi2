@@ -1,6 +1,5 @@
 lockfileVersion: 1
-lockfileVendor: abcde
-lockfileType: lock
+lockfileVendor: fedora
 arches:
   - arch: x86_64
     packages:
