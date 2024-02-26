@@ -109,7 +109,8 @@ def download_packages(session, dest_dir, repoid, urls):
 
 def createrepo(repoid, repodir):
     print(f"{Fore.GREEN}# Creating repo for {repoid}{Style.RESET_ALL}", file=sys.stderr)
-    cmd = ["/usr/bin/createrepo", repodir]
+    # cmd = ["/usr/bin/createrepo", repodir]
+    cmd = ["createrepo_c", repodir]
     print("$ " + shlex.join(cmd), file=sys.stderr)
     print(Style.DIM, end="", flush=True, file=sys.stderr)
     subprocess.run(cmd, check=True)

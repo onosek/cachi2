@@ -25,6 +25,7 @@ dependencies = [
   "backoff",
   "beautifulsoup4",
   "colorama",
+  "createrepo_c",
   "gitpython",
   "jsonschema",
   "packageurl-python",
