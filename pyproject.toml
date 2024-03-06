@@ -35,6 +35,7 @@ dependencies = [
   "pyyaml",
   "reflink",
   "requests",
+  "rpmfile",
   "semver",
   "setuptools",
   "tomli",

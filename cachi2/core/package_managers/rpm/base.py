@@ -7,6 +7,7 @@ class RpmsLock:
     def __init__(self, content: dict[str, Any]):
         self._content = content
         self._lockfile = None
+        self._files_sbom = {}
 
     def is_valid(self) -> bool:
         return self._lockfile is not None and self._lockfile

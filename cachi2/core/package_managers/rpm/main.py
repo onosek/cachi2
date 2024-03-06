@@ -1,5 +1,7 @@
 import logging
+from urllib.parse import quote
 
+import rpmfile
 import yaml
 
 from cachi2.core.errors import PackageRejected
@@ -7,6 +9,7 @@ from cachi2.core.models.input import Request
 from cachi2.core.models.output import EnvironmentVariable, RequestOutput
 from cachi2.core.models.sbom import Component
 from cachi2.core.package_managers.rpm.redhat.main import RedhatRpmsLock
+from cachi2.core.utils import run_cmd
 
 log = logging.getLogger(__name__)
 
@@ -58,6 +61,58 @@ def fetch_rpm_source(request: Request) -> RequestOutput:
         lockfile_format_processor.add_handler(RedhatRpmsLock)
         if lockfile_format_processor.process_formats():
             lockfile_format_processor.get_matched_handler().download(request.output_dir)
+            files_sbom = lockfile_format_processor.get_matched_handler()._files_sbom
+
+        for file, url in files_sbom.items():
+            # get (optional) 'epoch' - can't get it via rpmfile.headers
+            rpm_args = [
+                "-q",
+                "--queryformat",
+                "%|EPOCH?{%{EPOCH}}:{}|",  # return "" when epoch is not set instead of "(None)"
+                file,
+            ]
+            epoch = run_cmd(cmd=["rpm", *rpm_args], params={})
+
+            rpm_args = [
+                "-q",
+                "--queryformat",
+                "%{LICENSE}",
+                file,
+            ]
+            license = run_cmd(cmd=["rpm", *rpm_args], params={})
+
+            with rpmfile.open(file) as rpm:
+                vendor = rpm.headers.get("vendor", b"").decode()
+                vendor = quote(vendor.lower())
+
+                name = rpm.headers.get("name", b"").decode()
+                version = rpm.headers.get("version", b"").decode()
+                release = rpm.headers.get("release", b"").decode()
+                arch = rpm.headers.get("arch", b"").decode()
+                download_url = quote(url)
+
+                # https://github.com/package-url/purl-spec/blob/master/PURL-TYPES.rst#rpm
+                # https://github.com/package-url/purl-spec/blob/master/PURL-SPECIFICATION.rst#known-qualifiers-keyvalue-pairsa
+                # NOTE: add checksum?
+                purl = (
+                    f"pkg:rpm{'/' if vendor else ''}{vendor}/{name}@{version}{release}"
+                    f"?arch={arch}{'&epoch=' if epoch else ''}{epoch}&download_url={download_url}"
+                )
+                info = {  # TODO: refactor
+                    "package": {
+                        "name": name,
+                        "version": version,
+                        "type": "rpm",
+                        "license": license,
+                    },
+                }
+                components.append(
+                    Component(
+                        name=info["package"]["name"],
+                        version=info["package"]["version"],
+                        purl=purl,
+                    )
+                )
 
     return RequestOutput.from_obj_list(
         components, _generate_environment_variables(), project_files=[]
@@ -78,6 +133,8 @@ def _check_lockfile(request: Request) -> None:
 def _generate_environment_variables() -> list[EnvironmentVariable]:
     """Generate environment variables that will be used for building the project."""
     # TODO: set any environment values?
-    env_vars = {"ENV_1": {"value": "?", "kind": "path"}, }
+    env_vars = {
+        "ENV_1": {"value": "?", "kind": "path"},
+    }
 
     return [EnvironmentVariable(name=name, **obj) for name, obj in env_vars.items()]

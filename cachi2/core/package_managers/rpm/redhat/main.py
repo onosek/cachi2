@@ -71,17 +71,22 @@ class RedhatRpmsLock(RpmsLock):
     def download(self, output_dir: RootedPath) -> None:
         for arch in self._lockfile.arches:
             files = {}
+            files_sbom = {}
             for pkg in arch.packages:
-                dest = os.path.join(output_dir, arch.arch, pkg.repoid, os.path.basename(pkg.url))
-                files[pkg.url] = dest
-                os.makedirs(os.path.dirname(dest), exist_ok=True)
+                dest = output_dir.join_within_root(arch.arch, pkg.repoid, os.path.basename(pkg.url))
+                files[pkg.url] = dest.path
+                files_sbom[dest.path] = pkg.url
+                os.makedirs(os.path.dirname(dest.path), exist_ok=True)
 
             for pkg in arch.sources:
-                dest = os.path.join(output_dir, arch.arch, pkg.repoid, os.path.basename(pkg.url))
-                files[pkg.url] = dest
-                os.makedirs(os.path.dirname(dest), exist_ok=True)
+                dest = output_dir.join_within_root(
+                    "sources", arch.arch, pkg.repoid, os.path.basename(pkg.url)
+                )
+                files[pkg.url] = dest.path
+                os.makedirs(os.path.dirname(dest.path), exist_ok=True)
 
             asyncio.run(async_download_files(files, get_config().concurrency_limit))
+            self._files_sbom.update(files_sbom)
             self.verify_downloaded()
 
     def verify_downloaded(self) -> None:
