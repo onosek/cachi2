@@ -83,3 +83,10 @@ def _merge_outputs(outputs: Iterable[RequestOutput]) -> RequestOutput:
         environment_variables=env_vars,
         project_files=project_files,
     )
+
+
+def process_packages(path: Path) -> None:
+    """Do extra steps for package manager."""
+
+    # currently, there is only one supported package manager doing extra steps
+    rpm.process_packages(path)

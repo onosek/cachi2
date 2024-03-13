@@ -1,4 +1,8 @@
 import logging
+import os
+import shlex
+import subprocess
+from pathlib import Path
 from urllib.parse import quote
 
 import rpmfile
@@ -9,12 +13,14 @@ from cachi2.core.models.input import Request
 from cachi2.core.models.output import EnvironmentVariable, RequestOutput
 from cachi2.core.models.sbom import Component
 from cachi2.core.package_managers.rpm.redhat.main import RedhatRpmsLock
+from cachi2.core.rooted_path import RootedPath
 from cachi2.core.utils import run_cmd
 
 log = logging.getLogger(__name__)
 
 
 DEFAULT_LOCKFILE_NAME = "rpms.lock.yaml"
+DEFAULT_PACKAGE_DIR = "deps/rpm"
 
 
 class LockfileFormat:
@@ -60,7 +66,8 @@ def fetch_rpm_source(request: Request) -> RequestOutput:
         lockfile_format_processor = LockfileFormat(raw_content)
         lockfile_format_processor.add_handler(RedhatRpmsLock)
         if lockfile_format_processor.process_formats():
-            lockfile_format_processor.get_matched_handler().download(request.output_dir)
+            package_dir = request.output_dir.join_within_root(DEFAULT_PACKAGE_DIR)
+            lockfile_format_processor.get_matched_handler().download(package_dir)
             files_sbom = lockfile_format_processor.get_matched_handler()._files_sbom
 
         for file, url in files_sbom.items():
@@ -115,8 +122,30 @@ def fetch_rpm_source(request: Request) -> RequestOutput:
                 )
 
     return RequestOutput.from_obj_list(
-        components, _generate_environment_variables(), project_files=[]
+        components, _generate_environment_variables(DEFAULT_PACKAGE_DIR), project_files=[]
     )
+
+
+def process_packages(path: Path) -> None:
+    """ """
+    # search structure for all repoid dirs and create repository metadata
+    # out of its RPMs. Skil sources dir that contains only SRPMs.
+    package_dir = RootedPath(path).join_within_root(DEFAULT_PACKAGE_DIR)
+    for subdir in os.listdir(package_dir):
+        if subdir == "sources":
+            continue
+        arch = subdir
+        for repoid in os.listdir(os.path.join(package_dir, arch)):
+            localpath = os.path.join(package_dir, arch, repoid)
+            createrepo(repoid, localpath)
+
+
+def createrepo(repoid: str, repodir: str) -> None:
+    """ """
+    log.info(f"Creating repository metadata for repoid '{repoid}': {repodir}")
+    cmd = ["/usr/bin/createrepo", repodir]
+    log.debug("$ " + shlex.join(cmd))
+    subprocess.run(cmd, check=True)
 
 
 def _check_lockfile(request: Request) -> None:
@@ -130,11 +159,12 @@ def _check_lockfile(request: Request) -> None:
         )
 
 
-def _generate_environment_variables() -> list[EnvironmentVariable]:
+def _generate_environment_variables(package_dir: str) -> list[EnvironmentVariable]:
     """Generate environment variables that will be used for building the project."""
-    # TODO: set any environment values?
+
     env_vars = {
-        "ENV_1": {"value": "?", "kind": "path"},
+        # "PACKAGE_DIR": {"value": package_dir, "kind": "path"},  # TODO: do I need it?
+        # "USE_PACKAGE_MANAGER": {"value": "rpm", "kind": "literal"},
     }
 
     return [EnvironmentVariable(name=name, **obj) for name, obj in env_vars.items()]

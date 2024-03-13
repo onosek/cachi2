@@ -92,3 +92,8 @@ class RedhatRpmsLock(RpmsLock):
     def verify_downloaded(self) -> None:
         # TODO: use checksums & sizes as well
         pass
+        # h = hashlib.sha1(usedforsecurity=False)
+        # with open("rpms.yaml", "rb") as f:
+        #    for chunk in iter(lambda: f.read(4096), b""):
+        #        h.update(chunk)
+        # digest = h.hexdigest()
