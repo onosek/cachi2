@@ -10,7 +10,7 @@ import yaml
 
 from cachi2.core.errors import PackageRejected
 from cachi2.core.models.input import Request
-from cachi2.core.models.output import EnvironmentVariable, RequestOutput
+from cachi2.core.models.output import EnvironmentVariable, ProjectFile, RequestOutput
 from cachi2.core.models.sbom import Component
 from cachi2.core.package_managers.rpm.redhat.main import RedhatRpmsLock
 from cachi2.core.rooted_path import RootedPath
@@ -35,7 +35,7 @@ class LockfileFormat:
     def add_handler(self, handler) -> None:
         self._handlers.append(handler(self._raw_content))
 
-    def process_formats(self) -> None:
+    def process_formats(self) -> bool:
         for handler in self._handlers:
             log.debug("Checking format '{}'".format(handler.__class__.__name__))
             if handler.match_format():
@@ -122,14 +122,16 @@ def fetch_rpm_source(request: Request) -> RequestOutput:
                 )
 
     return RequestOutput.from_obj_list(
-        components, _generate_environment_variables(DEFAULT_PACKAGE_DIR), project_files=[]
+        components=components,
+        environment_variables=_generate_environment_variables(DEFAULT_PACKAGE_DIR),
+        project_files=_generate_repofiles(request.output_dir),
     )
 
 
 def process_packages(path: Path) -> None:
     """ """
     # search structure for all repoid dirs and create repository metadata
-    # out of its RPMs. Skil sources dir that contains only SRPMs.
+    # out of its RPMs. Skip sources dir that contains only SRPMs.
     package_dir = RootedPath(path).join_within_root(DEFAULT_PACKAGE_DIR)
     for subdir in os.listdir(package_dir):
         if subdir == "sources":
@@ -146,6 +148,27 @@ def createrepo(repoid: str, repodir: str) -> None:
     cmd = ["/usr/bin/createrepo", repodir]
     log.debug("$ " + shlex.join(cmd))
     subprocess.run(cmd, check=True)
+
+
+def _generate_repofiles(path: Path) -> list[ProjectFile]:
+    """ """
+    # search structure and generate repofile for each arch in its dir.
+    # Repofile contains all arch's repoids. Skip sources dir that contains only SRPMs.
+    project_files = []
+    package_dir = RootedPath(path).join_within_root(DEFAULT_PACKAGE_DIR)
+    for subdir in os.listdir(package_dir):
+        if subdir == "sources":
+            continue
+        arch = subdir
+        log.debug(f"Preparing repofile for arch '{arch}'")
+        abspath = os.path.join(package_dir, arch, "cachi2.repo")
+        template = ""
+        for repoid in os.listdir(os.path.join(package_dir, arch)):
+            localpath = os.path.join(package_dir, arch, repoid)
+            template += f"[{repoid}]\n"
+            template += f"baseurl = file://{localpath}\n"
+        project_files.append({"abspath": abspath, "template": template})
+    return project_files
 
 
 def _check_lockfile(request: Request) -> None:
