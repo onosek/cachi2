@@ -7,10 +7,13 @@ class RpmsLock:
     def __init__(self, content: dict[str, Any]):
         self._content = content
         self._lockfile = None
-        self._files_sbom = {}
+        self._files_metadata = {}
 
     def is_valid(self) -> bool:
         return self._lockfile is not None and self._lockfile
+
+    def get_metadata(self) -> dict:
+        return self._files_metadata
 
     def match_format(self) -> bool:
         raise NotImplementedError

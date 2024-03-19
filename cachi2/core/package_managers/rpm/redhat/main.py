@@ -1,4 +1,5 @@
 import asyncio
+import hashlib
 import logging
 import os
 from typing import Optional
@@ -70,12 +71,19 @@ class RedhatRpmsLock(RpmsLock):
 
     def download(self, output_dir: RootedPath) -> None:
         for arch in self._lockfile.arches:
-            files = {}
-            files_sbom = {}
+            log.debug(f"Downloading files for '{arch.arch}' architecture.")
+            files = {}  # files per URL for downloading packages & sources
+            # metadata of files per destination path (for verification and SBOM generation)
+            files_metadata = {}
             for pkg in arch.packages:
                 dest = output_dir.join_within_root(arch.arch, pkg.repoid, os.path.basename(pkg.url))
                 files[pkg.url] = dest.path
-                files_sbom[dest.path] = pkg.url
+                files_metadata[dest.path] = {
+                    "package": True,
+                    "url": pkg.url,
+                    "size": pkg.size,
+                    "checksum": pkg.checksum,
+                }
                 os.makedirs(os.path.dirname(dest.path), exist_ok=True)
 
             for pkg in arch.sources:
@@ -83,17 +91,35 @@ class RedhatRpmsLock(RpmsLock):
                     "sources", arch.arch, pkg.repoid, os.path.basename(pkg.url)
                 )
                 files[pkg.url] = dest.path
+                files_metadata[dest.path] = {
+                    "package": False,
+                    "url": pkg.url,
+                    "size": pkg.size,
+                    "checksum": pkg.checksum,
+                }
                 os.makedirs(os.path.dirname(dest.path), exist_ok=True)
 
             asyncio.run(async_download_files(files, get_config().concurrency_limit))
-            self._files_sbom.update(files_sbom)
-            self.verify_downloaded()
+            self._files_metadata.update(files_metadata)
 
     def verify_downloaded(self) -> None:
-        # TODO: use checksums & sizes as well
-        pass
-        # h = hashlib.sha1(usedforsecurity=False)
-        # with open("rpms.yaml", "rb") as f:
-        #    for chunk in iter(lambda: f.read(4096), b""):
-        #        h.update(chunk)
-        # digest = h.hexdigest()
+        log.debug("Verification of downloaded files has started.")
+        # check file size and checksum of downloaded files
+        for file_path, file_metadata in self._files_metadata.items():
+            if file_metadata["size"] is not None:  # size is optional
+                if os.path.getsize(file_path) != file_metadata["size"]:
+                    log.warning(f"Unexpected file size of '{file_path}' != {file_metadata['size']}")
+                    continue
+
+            if file_metadata["checksum"] is not None:  # checksum is optional
+                alg, digest = file_metadata["checksum"].split(":")
+                method = getattr(hashlib, alg.lower(), None)
+                if not method:
+                    log.warning(f"Unsupported hashing algorithm '{alg}' for '{file_path}'")
+                    continue
+                h = method(usedforsecurity=False)
+                with open(file_path, "rb") as f:
+                    for chunk in iter(lambda: f.read(4096), b""):
+                        h.update(chunk)
+                if digest != h.hexdigest():
+                    log.warning(f"Unmatched checksum of '{file_path}' != '{digest}'")

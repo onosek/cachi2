@@ -67,65 +67,67 @@ def fetch_rpm_source(request: Request) -> RequestOutput:
         lockfile_format_processor.add_handler(RedhatRpmsLock)
         if lockfile_format_processor.process_formats():
             package_dir = request.output_dir.join_within_root(DEFAULT_PACKAGE_DIR)
-            lockfile_format_processor.get_matched_handler().download(package_dir)
-            files_sbom = lockfile_format_processor.get_matched_handler()._files_sbom
-
-        for file, url in files_sbom.items():
-            # get (optional) 'epoch' - can't get it via rpmfile.headers
-            rpm_args = [
-                "-q",
-                "--queryformat",
-                "%|EPOCH?{%{EPOCH}}:{}|",  # return "" when epoch is not set instead of "(None)"
-                file,
-            ]
-            epoch = run_cmd(cmd=["rpm", *rpm_args], params={})
-
-            rpm_args = [
-                "-q",
-                "--queryformat",
-                "%{LICENSE}",
-                file,
-            ]
-            license = run_cmd(cmd=["rpm", *rpm_args], params={})
-
-            with rpmfile.open(file) as rpm:
-                vendor = rpm.headers.get("vendor", b"").decode()
-                vendor = quote(vendor.lower())
-
-                name = rpm.headers.get("name", b"").decode()
-                version = rpm.headers.get("version", b"").decode()
-                release = rpm.headers.get("release", b"").decode()
-                arch = rpm.headers.get("arch", b"").decode()
-                download_url = quote(url)
-
-                # https://github.com/package-url/purl-spec/blob/master/PURL-TYPES.rst#rpm
-                # https://github.com/package-url/purl-spec/blob/master/PURL-SPECIFICATION.rst#known-qualifiers-keyvalue-pairsa
-                # NOTE: add checksum?
-                purl = (
-                    f"pkg:rpm{'/' if vendor else ''}{vendor}/{name}@{version}{release}"
-                    f"?arch={arch}{'&epoch=' if epoch else ''}{epoch}&download_url={download_url}"
-                )
-                info = {  # TODO: refactor
-                    "package": {
-                        "name": name,
-                        "version": version,
-                        "type": "rpm",
-                        "license": license,
-                    },
-                }
-                components.append(
-                    Component(
-                        name=info["package"]["name"],
-                        version=info["package"]["version"],
-                        purl=purl,
-                    )
-                )
+            handler = lockfile_format_processor.get_matched_handler()
+            handler.download(package_dir)
+            handler.verify_downloaded()
+            files_metadata = handler.get_metadata()
+            _generate_sbom_components(components, files_metadata)
 
     return RequestOutput.from_obj_list(
         components=components,
         environment_variables=_generate_environment_variables(DEFAULT_PACKAGE_DIR),
         project_files=_generate_repofiles(request.output_dir),
     )
+
+
+def _generate_sbom_components(components: list[Component], files_metadata: dict) -> None:
+    """ """
+    for file_path, file_metadata in files_metadata.items():
+        # iterate only through package metadata (skip sources metadata)
+        if not file_metadata["package"]:
+            continue
+        # get (optional) 'epoch' - can't get it via rpmfile.headers
+        rpm_args = [
+            "-q",
+            "--queryformat",
+            "%|EPOCH?{%{EPOCH}}:{}|",  # return "" when epoch is not set instead of "(None)"
+            file_path,
+        ]
+        epoch = run_cmd(cmd=["rpm", *rpm_args], params={})
+
+        rpm_args = [
+            "-q",
+            "--queryformat",
+            "%{LICENSE}",
+            file_path,
+        ]
+        license = run_cmd(cmd=["rpm", *rpm_args], params={})
+
+        with rpmfile.open(file_path) as rpm:
+            vendor = rpm.headers.get("vendor", b"").decode()
+            vendor = quote(vendor.lower())
+
+            name = rpm.headers.get("name", b"").decode()
+            version = rpm.headers.get("version", b"").decode()
+            release = rpm.headers.get("release", b"").decode()
+            arch = rpm.headers.get("arch", b"").decode()
+            download_url = quote(file_metadata["url"])
+
+            # https://github.com/package-url/purl-spec/blob/master/PURL-TYPES.rst#rpm
+            # https://github.com/package-url/purl-spec/blob/master/PURL-SPECIFICATION.rst#known-qualifiers-keyvalue-pairsa
+            purl = (
+                f"pkg:rpm{'/' if vendor else ''}{vendor}/{name}@{version}{release}"
+                f"?arch={arch}{'&epoch=' if epoch else ''}{epoch}&download_url={download_url}"
+            )
+
+            components.append(
+                Component(
+                    name=name,
+                    version=version,
+                    purl=purl,
+                    # NOTE: add checksum?
+                )
+            )
 
 
 def process_packages(path: Path) -> None:
